@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Mesas para Evento</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; text-align: center; }
+        .pantalla { display: none; max-width: 400px; margin: auto; padding: 20px; border: 1px solid #ccc; border-radius: 10px; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); }
+        .activa { display: block; }
+        button { padding: 10px 20px; margin: 10px; font-size: 16px; cursor: pointer; background-color: #007BFF; color: white; border: none; border-radius: 5px; }
+        button:hover { background-color: #0056b3; }
+        input, textarea { width: 90%; padding: 8px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; }
+        .resultado { background-color: #f9f9f9; padding: 10px; margin: 10px 0; border-left: 5px solid #28a745; text-align: left;}
+    </style>
+</head>
+<body>
+
+    <div id="menu" class="pantalla activa">
+        <h2>App del Evento</h2>
+        <button onclick="cambiarPantalla('pantallaGuardar')">Guardar Mesa</button>
+        <button onclick="cambiarPantalla('pantallaBuscar')">Buscar Invitado</button>
+    </div>
+
+    <div id="pantallaGuardar" class="pantalla">
+        <h2>Guardar Mesa <span id="labelNumeroMesa">1</span></h2>
+        
+        <label>Nombre de la Mesa (Ej. Familia Castillo):</label>
+        <input type="text" id="nombreMesa" placeholder="Nombre de la mesa">
+
+        <label>Capacidad:</label>
+        <input type="number" id="capacidadMesa" value="4">
+
+        <label>Invitados (separados por coma):</label>
+        <textarea id="invitadosMesa" rows="3" placeholder="María, Luis, Fernanda"></textarea>
+
+        <button onclick="guardarMesa()">Guardar</button>
+        <br>
+        <button onclick="cambiarPantalla('menu')" style="background-color: gray;">Volver al Menú</button>
+    </div>
+
+    <div id="pantallaBuscar" class="pantalla">
+        <h2>Buscar Invitado</h2>
+        <input type="text" id="inputBusqueda" placeholder="Nombre del invitado (Ej. María)">
+        <button onclick="buscar()">Buscar</button>
+        
+        <div id="areaResultados"></div>
+        
+        <br>
+        <button onclick="cambiarPantalla('menu')" style="background-color: gray;">Volver al Menú</button>
+    </div>
+
+    <script>
+        // Memoria de la App
+        let mesas = [];
+        let numeroMesaActual = 1;
+        let capacidadAnterior = 4; // Valor predeterminado inicial
+
+        // Función para navegar entre pantallas
+        function cambiarPantalla(idPantalla) {
+            document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+            document.getElementById(idPantalla).classList.add('activa');
+            
+            // Si vamos a guardar, actualizamos el número de mesa y la última capacidad usada
+            if (idPantalla === 'pantallaGuardar') {
+                document.getElementById('labelNumeroMesa').innerText = numeroMesaActual;
+                document.getElementById('capacidadMesa').value = capacidadAnterior;
+            }
+        }
+
+        // Función para guardar la mesa
+        function guardarMesa() {
+            let nombre = document.getElementById('nombreMesa').value.trim();
+            let capacidad = document.getElementById('capacidadMesa').value;
+            let invitadosTexto = document.getElementById('invitadosMesa').value;
+
+            if (nombre === "" || invitadosTexto === "") {
+                alert("Por favor, llena el nombre de la mesa y los invitados.");
+                return;
+            }
+
+            // Convertimos el texto de invitados en un arreglo (lista)
+            let listaInvitados = invitadosTexto.split(',').map(invitado => invitado.trim());
+
+            // Creamos el objeto Mesa
+            let nuevaMesa = {
+                numero: numeroMesaActual,
+                nombre: nombre,
+                capacidad: capacidad,
+                invitados: listaInvitados
+            };
+
+            mesas.push(nuevaMesa); // Lo guardamos en nuestra "base de datos" temporal
+            
+            // Actualizamos las variables para la siguiente mesa
+            capacidadAnterior = capacidad; 
+            numeroMesaActual++;
+
+            // Limpiamos los campos
+            document.getElementById('nombreMesa').value = "";
+            document.getElementById('invitadosMesa').value = "";
+
+            alert("Mesa " + nuevaMesa.numero + " guardada con éxito.");
+            cambiarPantalla('menu'); // Regresamos al menú
+        }
+
+        // Función para buscar
+        function buscar() {
+            let textoBusqueda = document.getElementById('inputBusqueda').value.trim().toLowerCase();
+            let areaResultados = document.getElementById('areaResultados');
+            areaResultados.innerHTML = ""; // Limpiar resultados anteriores
+
+            if (textoBusqueda === "") return;
+
+            let encontrados = false;
+
+            // Recorremos todas las mesas
+            mesas.forEach(mesa => {
+                // Recorremos los invitados de cada mesa
+                mesa.invitados.forEach(invitado => {
+                    // Si el nombre del invitado coincide con la búsqueda
+                    if (invitado.toLowerCase().includes(textoBusqueda)) {
+                        encontrados = true;
+                        areaResultados.innerHTML += `
+                            <div class="resultado">
+                                <strong>Invitado:</strong> ${invitado} <br>
+                                <strong>Ubicación:</strong> Mesa ${mesa.numero} - "${mesa.nombre}"
+                            </div>
+                        `;
+                    }
+                });
+            });
+
+            if (!encontrados) {
+                areaResultados.innerHTML = "<p>No se encontró a nadie con ese nombre.</p>";
+            }
+        }
+    </script>
+</body>
+</html>
